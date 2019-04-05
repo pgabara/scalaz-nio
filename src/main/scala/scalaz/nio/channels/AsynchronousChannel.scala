@@ -1,19 +1,14 @@
 package scalaz.nio.channels
 
-import java.lang.{ Integer => JInteger, Long => JLong, Void => JVoid }
-import java.nio.{ ByteBuffer => JByteBuffer }
-import java.nio.channels.{
-  AsynchronousByteChannel => JAsynchronousByteChannel,
-  AsynchronousServerSocketChannel => JAsynchronousServerSocketChannel,
-  AsynchronousSocketChannel => JAsynchronousSocketChannel,
-  CompletionHandler => JCompletionHandler
-}
-
+import java.lang.{Integer => JInteger, Long => JLong, Void => JVoid}
+import java.nio.{ByteBuffer => JByteBuffer}
+import java.net.{InetSocketAddress => JInetSocketAddress}
+import java.nio.channels.{AsynchronousByteChannel => JAsynchronousByteChannel, AsynchronousServerSocketChannel => JAsynchronousServerSocketChannel, AsynchronousSocketChannel => JAsynchronousSocketChannel, CompletionHandler => JCompletionHandler}
 import java.util.concurrent.TimeUnit
 
 import scalaz.nio.channels.AsynchronousChannel._
-import scalaz.nio.{ Buffer, SocketAddress, SocketOption }
-import scalaz.zio.{ Chunk, IO, JustExceptions, ZIO }
+import scalaz.nio.{Buffer, InetSocketAddress, SocketAddress, SocketOption}
+import scalaz.zio.{Chunk, IO, JustExceptions, ZIO}
 import scalaz.zio.duration._
 
 class AsynchronousByteChannel(private val channel: JAsynchronousByteChannel) {
@@ -128,7 +123,9 @@ class AsynchronousServerSocketChannel(private val channel: JAsynchronousServerSo
    */
   final def localAddress: IO[Exception, Option[SocketAddress]] =
     IO.effect(
-        Option(channel.getLocalAddress).map(new SocketAddress(_))
+        Option(channel.getLocalAddress).collect {
+          case s: JInetSocketAddress => new InetSocketAddress(s)
+        }
       )
       .refineOrDie(JustExceptions)
 
@@ -181,15 +178,17 @@ class AsynchronousSocketChannel(private val channel: JAsynchronousSocketChannel)
 
   final def remoteAddress: IO[Exception, Option[SocketAddress]] =
     IO.effect(
-        Option(channel.getRemoteAddress)
-          .map(new SocketAddress(_))
+        Option(channel.getRemoteAddress).collect {
+          case s: JInetSocketAddress => new InetSocketAddress(s)
+        }
       )
       .refineOrDie(JustExceptions)
 
   final def localAddress: IO[Exception, Option[SocketAddress]] =
     IO.effect(
-        Option(channel.getLocalAddress)
-          .map(new SocketAddress(_))
+        Option(channel.getLocalAddress).collect {
+          case s: JInetSocketAddress => new InetSocketAddress(s)
+        }
       )
       .refineOrDie(JustExceptions)
 
