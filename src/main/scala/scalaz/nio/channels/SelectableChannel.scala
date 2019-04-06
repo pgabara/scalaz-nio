@@ -1,18 +1,14 @@
 package scalaz.nio.channels
 
 import java.io.IOException
-import java.net.{ Socket => JSocket, ServerSocket => JServerSocket }
-import java.nio.{ ByteBuffer => JByteBuffer }
-import java.nio.channels.{
-  SelectableChannel => JSelectableChannel,
-  ServerSocketChannel => JServerSocketChannel,
-  SocketChannel => JSocketChannel
-}
+import java.net.{ServerSocket => JServerSocket, InetSocketAddress => JInetSocketAddress, Socket => JSocket}
+import java.nio.{ByteBuffer => JByteBuffer}
+import java.nio.channels.{SelectableChannel => JSelectableChannel, ServerSocketChannel => JServerSocketChannel, SocketChannel => JSocketChannel}
 
 import scalaz.nio.channels.spi.SelectorProvider
 import scalaz.nio.io._
-import scalaz.nio.{ Buffer, SocketAddress, SocketOption }
-import scalaz.zio.{ IO, JustExceptions, UIO }
+import scalaz.nio.{Buffer, InetSocketAddress, SocketAddress, SocketOption}
+import scalaz.zio.{IO, JustExceptions, UIO}
 
 class SelectableChannel(private val channel: JSelectableChannel) {
 
@@ -84,7 +80,7 @@ class SocketChannel(private val channel: JSocketChannel) extends SelectableChann
     IO.effect(channel.finishConnect()).refineOrDie(JustIOException)
 
   final val remoteAddress: IO[IOException, SocketAddress] =
-    IO.effect(new SocketAddress(channel.getRemoteAddress())).refineOrDie(JustIOException)
+    IO.effect(new InetSocketAddress(channel.getRemoteAddress().asInstanceOf[JInetSocketAddress])).refineOrDie(JustIOException)
 
   final def read(b: Buffer[Byte]): IO[IOException, Int] =
     IO.effect(channel.read(b.buffer.asInstanceOf[JByteBuffer])).refineOrDie(JustIOException)
@@ -93,9 +89,8 @@ class SocketChannel(private val channel: JSocketChannel) extends SelectableChann
     IO.effect(channel.write(b.buffer.asInstanceOf[JByteBuffer])).refineOrDie(JustIOException)
 
   final val localAddress: IO[IOException, Option[SocketAddress]] =
-    IO.effect(Option(channel.getLocalAddress()).map(new SocketAddress(_)))
+    IO.effect(Option(channel.getLocalAddress()).map(sa => new InetSocketAddress(sa.asInstanceOf[JInetSocketAddress])))
       .refineOrDie(JustIOException)
-
 }
 
 object SocketChannel {
@@ -128,7 +123,7 @@ class ServerSocketChannel(private val channel: JServerSocketChannel)
     IO.effect(Option(channel.accept()).map(new SocketChannel(_))).refineOrDie(JustIOException)
 
   final val localAddress: IO[IOException, SocketAddress] =
-    IO.effect(new SocketAddress(channel.getLocalAddress())).refineOrDie(JustIOException)
+    IO.effect(new InetSocketAddress(channel.getLocalAddress().asInstanceOf[JInetSocketAddress])).refineOrDie(JustIOException)
 
 }
 
