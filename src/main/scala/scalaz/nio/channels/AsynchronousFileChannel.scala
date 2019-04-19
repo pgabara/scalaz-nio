@@ -1,20 +1,15 @@
 package scalaz.nio.channels
 
-import java.nio.{ ByteBuffer => JByteBuffer }
-import java.nio.channels.{
-  AsynchronousFileChannel => JAsynchronousFileChannel,
-  CompletionHandler,
-  FileLock
-}
-import scalaz.zio.Task
-import scalaz.zio.Chunk
+import java.nio.{ByteBuffer => JByteBuffer}
+import java.nio.channels.{CompletionHandler, FileLock, AsynchronousFileChannel => JAsynchronousFileChannel}
+
+import scalaz.zio.{Chunk, IO, JustExceptions, Task, UIO}
 import scalaz.nio.Buffer
-import java.nio.file.{ OpenOption, Path }
+import java.nio.file.{OpenOption, Path}
 import java.nio.file.attribute.FileAttribute
 import java.util.concurrent.ExecutorService
 
 import scalaz.zio.interop.javaconcurrent._
-import scalaz.zio.{ IO, JustExceptions }
 
 import scala.collection.JavaConverters._
 
@@ -125,8 +120,8 @@ class AsynchronousFileChannel(private val channel: JAsynchronousFileChannel) {
   /**
    * Tells whether or not this channel is open.
    */
-  final val isOpen: IO[Exception, Boolean] =
-    IO.effect(channel.isOpen).refineOrDie(JustExceptions)
+  final val isOpen: UIO[Boolean] =
+    IO.effectTotal(channel.isOpen)
 }
 
 object AsynchronousFileChannel {

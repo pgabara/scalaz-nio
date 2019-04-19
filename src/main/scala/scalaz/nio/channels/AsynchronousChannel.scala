@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 import scalaz.nio.channels.AsynchronousChannel._
 import scalaz.nio.{Buffer, InetSocketAddress, SocketAddress, SocketOption}
-import scalaz.zio.{Chunk, IO, JustExceptions, ZIO}
+import scalaz.zio.{Chunk, IO, JustExceptions, UIO, ZIO}
 import scalaz.zio.duration._
 
 class AsynchronousByteChannel(private val channel: JAsynchronousByteChannel) {
@@ -78,8 +78,8 @@ class AsynchronousByteChannel(private val channel: JAsynchronousByteChannel) {
   /**
    * Tells whether or not this channel is open.
    */
-  final val isOpen: IO[Exception, Boolean] =
-    IO.effect(channel.isOpen).refineOrDie(JustExceptions)
+  final val isOpen: UIO[Boolean] =
+    IO.effectTotal(channel.isOpen)
 }
 
 class AsynchronousServerSocketChannel(private val channel: JAsynchronousServerSocketChannel) {
@@ -138,8 +138,8 @@ class AsynchronousServerSocketChannel(private val channel: JAsynchronousServerSo
   /**
    * Tells whether or not this channel is open.
    */
-  final val isOpen: IO[Exception, Boolean] =
-    IO.effect(channel.isOpen).refineOrDie(JustExceptions)
+  final val isOpen: UIO[Boolean] =
+    IO.effectTotal(channel.isOpen)
 }
 
 object AsynchronousServerSocketChannel {
